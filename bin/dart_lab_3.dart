@@ -2,34 +2,34 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-class Vehicle{
-  String brand;
-  int year;
-  Vehicle(this.brand,this.year);
-  void startEngine() => print("Khởi động phương tiện...");
+abstract class Employee {
+  String name;
+  Employee(this.name);
+  void work();
 }
 
-class Car extends Vehicle{
-  bool isElectric = false;
-  Car(this.isElectric,super.brand,super.year);
+// TODO 1: Khai báo mixin CheckInAbility giới hạn cho Employee
+mixin CheckInAbility on Employee {
+  void checkIn() => print("$name đã điểm danh");
+}
+
+class Developer extends Employee with CheckInAbility {
+  // TODO 2: Tích hợp mixin CheckInAbility vào class này
+  Developer(String name) : super(name);
   
-  Car.tesla(int year) : super("Tesla",year){
-    isElectric = true;
-  }
-
   @override
-  void startEngine(){
-    if(isElectric)
-      print("Khởi động Electirc Car...");
-    else 
-      print("Khởi động non-Electirc Car...");
-  }
+  void work() => print("$name đang viết code.");
 }
 
-void main(){
-  Car xe = new Car(false,"Toyota",2021);
-  xe.startEngine();
-
-  Car tesla = new Car.tesla(2022);
-  tesla.startEngine();
+void main() {
+  List<Developer> teamA = [Developer("An"), Developer("Bình")];
+  List<Developer> teamB = [Developer("Cường")];
+  
+  // TODO 3: Dùng Spread Operator (...) để gộp teamA và teamB vào allStaff
+  List<Developer> allStaff = [...teamA,...teamB]; 
+  
+  // TODO 4: Dùng vòng lặp gọi hàm checkIn() cho tất cả nhân sự trong allStaff
+  for(var em in allStaff){
+    em.checkIn();
+  }
 }
