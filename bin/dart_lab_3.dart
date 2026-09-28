@@ -1,35 +1,35 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-
-abstract class Employee {
+class User {
+  int id;
   String name;
-  Employee(this.name);
-  void work();
-}
+  // TODO 1: Khai báo biến email có thể mang giá trị null (nullable variable)
+  String? email;
+  // Constructor
+  User({required this.id, required this.name, this.email});
 
-// TODO 1: Khai báo mixin CheckInAbility giới hạn cho Employee
-mixin CheckInAbility on Employee {
-  void checkIn() => print("$name đã điểm danh");
-}
-
-class Developer extends Employee with CheckInAbility {
-  // TODO 2: Tích hợp mixin CheckInAbility vào class này
-  Developer(String name) : super(name);
+  // TODO 2: Khai báo factory User.fromJson(Map<String, dynamic> json)
+  // - Lấy id từ json['id']
+  // - Lấy name từ json['name']. Nếu null, dùng toán tử ?? để gán mặc định là "Khách"
+  // - Lấy email từ json['email']
+  factory User.fromJson(Map<String, dynamic> json){
+    return User(id: json["id"],name: json["name"] ?? "Khách",email: json["email"]);    
+  }
   
-  @override
-  void work() => print("$name đang viết code.");
+  void showProfile() {
+    // TODO 3: In ra thông tin. Dùng toán tử ?? để xử lý email nếu bị null.
+    // Gợi ý chuỗi in ra: "ID: $id | Tên: $name | Email: ..."
+    print("ID: $id | Tên: $name | Email: ${email??"Không có email"}");
+  }
 }
 
 void main() {
-  List<Developer> teamA = [Developer("An"), Developer("Bình")];
-  List<Developer> teamB = [Developer("Cường")];
-  
-  // TODO 3: Dùng Spread Operator (...) để gộp teamA và teamB vào allStaff
-  List<Developer> allStaff = [...teamA,...teamB]; 
-  
-  // TODO 4: Dùng vòng lặp gọi hàm checkIn() cho tất cả nhân sự trong allStaff
-  for(var em in allStaff){
-    em.checkIn();
-  }
+  // Giả lập dữ liệu JSON trả về từ API
+  Map<String, dynamic> rawData1 = {"id": 1, "name": "Nam", "email": "nam@fpt.edu.vn"};
+  Map<String, dynamic> rawData2 = {"id": 2, "name": null, "email": null};
+
+  // TODO 4: Khởi tạo user1 và user2 từ 2 Map trên bằng User.fromJson() và gọi showProfile()
+  User user1 = new User.fromJson(rawData1);
+  User user2 = new User.fromJson(rawData2);
+
+  user1.showProfile();
+  user2.showProfile();
 }
