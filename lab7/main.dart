@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Lab 7.2 - Validation Rules & Password Strength',
+      title: 'Lab 7.3 - Focus & Keyboard Management',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -52,8 +52,7 @@ class MyApp extends StatelessWidget {
 enum PasswordStrength { none, weak, medium, strong }
 
 /// Màn hình đăng ký tài khoản
-/// Lab 7.2: Thêm Validation Rules riêng biệt, Mật khẩu mạnh, Xác nhận mật khẩu,
-/// AutovalidateMode.onUserInteraction và Thanh đo độ mạnh mật khẩu (Password Strength).
+/// Lab 7.3: Quản lý FocusNode, Chuyển focus bằng Next/Done, Ẩn bàn phím khi chạm ra ngoài
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -70,6 +69,12 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+
+  // Lab 7.3: FocusNode cho từng ô nhập liệu để điều khiển di chuyển focus
+  final FocusNode _fullNameFocus = FocusNode();
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+  final FocusNode _confirmPasswordFocus = FocusNode();
 
   // Biến lưu trữ giá trị sau khi formKey.currentState!.save()
   String _fullName = '';
@@ -99,6 +104,13 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+
+    // Lab 7.3: Luôn giải phóng (dispose) các FocusNode để tránh rò rỉ bộ nhớ
+    _fullNameFocus.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    _confirmPasswordFocus.dispose();
+
     super.dispose();
   }
 
@@ -156,7 +168,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   // ==========================================
-  // TÍNH TOÁN ĐỘ MẠNH CỦA MẬT KHẨU (ENHANCEMENT)
+  // TÍNH TOÁN ĐỘ MẠNH CỦA MẬT KHẨU
   // ==========================================
 
   PasswordStrength _getStrength(String password) {
@@ -252,10 +264,13 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   // ==========================================
-  // XỬ LÝ SUBMIT & RESET
+  // XỬ LÝ SUBMIT & RESET (KẾT HỢP FOCUS)
   // ==========================================
 
   void _submitForm() {
+    // Ẩn bàn phím khi submit form
+    FocusScope.of(context).unfocus();
+
     // 1. Kích hoạt kiểm tra validation toàn bộ Form
     final isValid = _formKey.currentState!.validate();
 
@@ -275,7 +290,7 @@ class _SignupScreenState extends State<SignupScreen> {
     // 3. Form hợp lệ: Lưu dữ liệu
     _formKey.currentState!.save();
 
-    debugPrint('=== Form Submitted Successfully (Lab 7.2) ===');
+    debugPrint('=== Form Submitted Successfully (Lab 7.3) ===');
     debugPrint('Full Name: $_fullName');
     debugPrint('Email: $_email');
     debugPrint('Password length: ${_password.length}');
@@ -300,6 +315,9 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _resetForm() {
+    // Bỏ focus và ẩn bàn phím
+    FocusScope.of(context).unfocus();
+
     _formKey.currentState?.reset();
     _fullNameController.clear();
     _emailController.clear();
@@ -327,149 +345,181 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              // Lab 7.2: autovalidateMode: AutovalidateMode.onUserInteraction
-              // Tự động kiểm tra ngay khi người dùng bắt đầu tương tác nhập liệu
-              child: Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: ListView(
-                  children: [
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Create Account',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Please fill in the information below to register.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // 1. Full Name
-                    TextFormField(
-                      controller: _fullNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name',
-                        hintText: 'Enter your full name',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                      validator: _validateFullName,
-                      onSaved: (value) {
-                        _fullName = value?.trim() ?? '';
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 2. Email
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'name@example.com',
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                      validator: _validateEmail,
-                      onSaved: (value) {
-                        _email = value?.trim() ?? '';
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 3. Password
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'At least 8 characters with numbers',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+      // Lab 7.3: Bọc toàn màn hình bằng GestureDetector để khi người dùng chạm
+      // vào vùng trống bên ngoài, bàn phím ảo sẽ tự động ẩn đi (unfocus).
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                child: Form(
+                  key: _formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  // Dùng ListView để nội dung có thể cuộn, tránh lỗi tràn màn hình khi bàn phím xuất hiện
+                  child: ListView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    children: [
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      validator: _validatePassword,
-                      onSaved: (value) {
-                        _password = value ?? '';
-                      },
-                    ),
-                    // Thanh hiển thị độ mạnh mật khẩu theo thời gian thực
-                    _buildPasswordStrengthIndicator(),
-                    const SizedBox(height: 16),
-
-                    // 4. Confirm Password
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: _obscureConfirmPassword,
-                      decoration: InputDecoration(
-                        labelText: 'Confirm Password',
-                        hintText: 'Re-enter your password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
-                          },
+                      const SizedBox(height: 6),
+                      Text(
+                        'Please fill in the information below to register.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
                         ),
                       ),
-                      validator: _validateConfirmPassword,
-                      onSaved: (value) {
-                        _confirmPassword = value ?? '';
-                      },
-                    ),
-                    const SizedBox(height: 28),
+                      const SizedBox(height: 24),
 
-                    // 5. Submit Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 2,
+                      // 1. Full Name
+                      // textInputAction: next -> chuyển sang EmailFocus khi nhấn Next
+                      TextFormField(
+                        controller: _fullNameController,
+                        focusNode: _fullNameFocus,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context).requestFocus(_emailFocus);
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Full Name',
+                          hintText: 'Enter your full name',
+                          prefixIcon: Icon(Icons.person_outline),
                         ),
-                        onPressed: _submitForm,
-                        child: const Text(
-                          'Submit',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        validator: _validateFullName,
+                        onSaved: (value) {
+                          _fullName = value?.trim() ?? '';
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 2. Email
+                      // textInputAction: next -> chuyển sang PasswordFocus khi nhấn Next
+                      TextFormField(
+                        controller: _emailController,
+                        focusNode: _emailFocus,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context).requestFocus(_passwordFocus);
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'name@example.com',
+                          prefixIcon: Icon(Icons.email_outlined),
+                        ),
+                        validator: _validateEmail,
+                        onSaved: (value) {
+                          _email = value?.trim() ?? '';
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 3. Password
+                      // textInputAction: next -> chuyển sang ConfirmPasswordFocus khi nhấn Next
+                      TextFormField(
+                        controller: _passwordController,
+                        focusNode: _passwordFocus,
+                        obscureText: _obscurePassword,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context).requestFocus(_confirmPasswordFocus);
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          hintText: 'At least 8 characters with numbers',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: _validatePassword,
+                        onSaved: (value) {
+                          _password = value ?? '';
+                        },
+                      ),
+                      // Thanh hiển thị độ mạnh mật khẩu theo thời gian thực
+                      _buildPasswordStrengthIndicator(),
+                      const SizedBox(height: 16),
+
+                      // 4. Confirm Password
+                      // textInputAction: done -> gọi submit khi nhấn Done trên bàn phím
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        focusNode: _confirmPasswordFocus,
+                        obscureText: _obscureConfirmPassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) {
+                          _submitForm();
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Confirm Password',
+                          hintText: 'Re-enter your password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirmPassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureConfirmPassword = !_obscureConfirmPassword;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: _validateConfirmPassword,
+                        onSaved: (value) {
+                          _confirmPassword = value ?? '';
+                        },
+                      ),
+                      const SizedBox(height: 28),
+
+                      // 5. Submit Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                          ),
+                          onPressed: _submitForm,
+                          child: const Text(
+                            'Submit',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
             ),
